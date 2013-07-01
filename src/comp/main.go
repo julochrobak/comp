@@ -52,7 +52,7 @@ func Command(expr, files string, cores int) error {
 	log.Printf("running the program")
 	res := prg.Run(new(Stack))
 	if res != nil {
-		if err := res.Quote(os.Stdout, rt); err != nil {
+		if err := res.Quote(os.Stdout, rt, -1); err != nil {
 			return err
 		}
 		fmt.Printf("\n")

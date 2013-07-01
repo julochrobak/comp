@@ -62,6 +62,16 @@ func (fq FullQuery) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		limit := -1
+		if v, ok := req["limit"]; ok {
+			lim, isFloat := v.(float64)
+			if !isFloat {
+				badReq(w, `{"error": "limit is not of type number"}`)
+				return
+			}
+			limit = int(lim)
+		}
+
 		decls := Store(fq).Decls()
 		for name, value := range req {
 			if name == "expr" {
@@ -88,7 +98,7 @@ func (fq FullQuery) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		res := prg.Run(new(Stack))
 		fmt.Fprintf(w, `{"result": `)
 		if res != nil {
-			if err := res.Quote(w, rt); err != nil {
+			if err := res.Quote(w, rt, limit); err != nil {
 				log.Printf("failed to marshal result: %v", err)
 			}
 		} else {
