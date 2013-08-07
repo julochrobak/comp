@@ -3,7 +3,9 @@
 
 package main
 
-import "testing"
+import (
+	"testing"
+)
 
 func TestFuzzy(t *testing.T) {
 	if d := dist("", ""); d != 0 {
@@ -56,5 +58,11 @@ func TestFuzzy(t *testing.T) {
 
 	if r := Fuzzy("Zürich", "Zurich"); r != 0.8333333333333334 {
 		t.Errorf("failed (fuzzy == %v)", r)
+	}
+}
+
+func BenchmarkFuzzy(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		Fuzzy("Hello World!", "Hello wORLD?")
 	}
 }
