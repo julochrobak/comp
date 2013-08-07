@@ -13,46 +13,46 @@ func min(a, b, c int) int {
 }
 
 func dist(left, right string) int {
+	if left == right {
+		return 0
+	}
+	if len(left) == 0 {
+		return len(right)
+	}
+	if len(right) == 0 {
+		return len(left)
+	}
+
 	s := []rune(left)
 	t := []rune(right)
 
-	/*
-	   LevenshteinDistance(char s[1..m], char t[1..n])
-	   for all i and j, d[i,j] will hold the Levenshtein distance between
-	   the first i characters of s and the first j characters of t
-	   note that d has (m+1)x(n+1) values
-	*/
+	prev := make([]int, len(t)+1)
+	curr := make([]int, len(t)+1)
 
-	m := len(s) + 1
-	n := len(t) + 1
-	var d [][]int
-
-	d = make([][]int, m)
-	for i := 0; i < m; i++ {
-		d[i] = make([]int, n)
+	// initialize prev (simulating an empty s)
+	for i := 0; i < len(prev); i++ {
+		prev[i] = i
 	}
 
-	for i := 0; i < m; i++ {
-		d[i][0] = i // the distance of any first string to an empty second string
-	}
-	for j := 0; j < n; j++ {
-		d[0][j] = j // the distance of any second string to an empty first string
-	}
+	for i := 0; i < len(s); i++ {
+		// first element of curr is A[i+1][0]
+		//   edit distance is delete (i+1) chars from s to match empty t
+		curr[0] = i + 1
 
-	for j := 1; j < n; j++ {
-		for i := 1; i < m; i++ {
-			if s[i-1] == t[j-1] {
-				d[i][j] = d[i-1][j-1] // no operation required
-			} else {
-				d[i][j] = min(
-					d[i-1][j]+1,   // a deletion
-					d[i][j-1]+1,   // an insertion
-					d[i-1][j-1]+1) // a substitution
+		for j := 0; j < len(t); j++ {
+			cost := 0
+			if s[i] != t[j] {
+				cost = 1
 			}
+			curr[j+1] = min(curr[j]+1, prev[j+1]+1, prev[j]+cost)
+		}
+
+		for j := 0; j < len(t); j++ {
+			prev[j] = curr[j]
 		}
 	}
 
-	return d[m-1][n-1]
+	return curr[len(t)]
 }
 
 func Fuzzy(left, right string) float64 {
