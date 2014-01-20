@@ -27,7 +27,7 @@ type Value interface {
 	List() List
 	Object() Object
 
-	Quote(w io.Writer, t Type) error
+	Quote(w io.Writer, t Type, limit int) error
 	Equals(v Value) Bool
 }
 
@@ -69,7 +69,7 @@ func (b Bool) Object() Object {
 	return Object{b}
 }
 
-func (b Bool) Quote(w io.Writer, t Type) error {
+func (b Bool) Quote(w io.Writer, t Type, limit int) error {
 	return marshal(w, bool(b))
 }
 
@@ -101,7 +101,7 @@ func (n Number) Object() Object {
 	return Object{n}
 }
 
-func (n Number) Quote(w io.Writer, t Type) error {
+func (n Number) Quote(w io.Writer, t Type, limit int) error {
 	var v interface{}
 	if math.IsInf(float64(n), 0) || math.IsNaN(float64(n)) {
 		v = fmt.Sprintf(`%v`, n)
@@ -137,7 +137,7 @@ func (s String) Object() Object {
 	return Object{s}
 }
 
-func (s String) Quote(w io.Writer, t Type) error {
+func (s String) Quote(w io.Writer, t Type, limit int) error {
 	return marshal(w, string(s))
 }
 
@@ -165,7 +165,7 @@ func (l List) Object() Object {
 	return nil
 }
 
-func (l List) Quote(w io.Writer, t Type) error {
+func (l List) Quote(w io.Writer, t Type, limit int) error {
 	_, err := io.WriteString(w, "[ ")
 	if err != nil {
 		return err
@@ -176,7 +176,12 @@ func (l List) Quote(w io.Writer, t Type) error {
 		return fmt.Errorf("internal error: %v is not a list", t.Name())
 	}
 
+	cnt := 0
 	for i, v := range l {
+		if limit >= 0 && limit <= cnt {
+			break
+		}
+
 		if i != 0 {
 			_, err = io.WriteString(w, ", ")
 			if err != nil {
@@ -184,9 +189,10 @@ func (l List) Quote(w io.Writer, t Type) error {
 			}
 		}
 
-		if err := v.Quote(w, lt.Elem); err != nil {
+		if err := v.Quote(w, lt.Elem, -1); err != nil {
 			return err
 		}
+		cnt++
 	}
 
 	_, err = io.WriteString(w, " ]")
@@ -228,7 +234,7 @@ func (o Object) Object() Object {
 	return o
 }
 
-func (o Object) Quote(w io.Writer, t Type) error {
+func (o Object) Quote(w io.Writer, t Type, limit int) error {
 	_, err := io.WriteString(w, "{ ")
 	if err != nil {
 		return err
@@ -252,7 +258,7 @@ func (o Object) Quote(w io.Writer, t Type) error {
 			return err
 		}
 
-		if err := v.Quote(w, ot[i].Type); err != nil {
+		if err := v.Quote(w, ot[i].Type, -1); err != nil {
 			return err
 		}
 	}
